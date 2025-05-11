@@ -1,10 +1,9 @@
 import Task from '../model/task.schema.js';
-import User from '../model/user.schema.js'; // Import User model
+import User from '../model/user.schema.js'; 
 
 export const createTask = async (req, res) => {
   const { title, description, status, dueDate, assignedTo } = req.body;
 
-  // Find users by email before saving the task
   try {
     const assignedUser = await User.findOne({ email: assignedTo });
     const createdByUser = await User.findOne({ email: req.user.email });
@@ -18,8 +17,8 @@ export const createTask = async (req, res) => {
       description,
       status,
       dueDate,
-      assignedTo, // Storing email directly
-      createdBy: req.user.email, // Storing email directly
+      assignedTo, 
+      createdBy: req.user.email, 
     });
 
     await newTask.save();
@@ -31,7 +30,6 @@ export const createTask = async (req, res) => {
 
 export const getAllTasks = async (req, res) => {
   try {
-    // Fetch tasks, and populate users based on email (instead of ObjectId)
     const tasks = await Task.find().populate('assignedTo createdBy', 'email name');
     res.status(200).json({ success: true, tasks });
   } catch (error) {
