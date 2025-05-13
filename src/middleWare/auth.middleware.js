@@ -1,19 +1,36 @@
-import jwt from 'jsonwebtoken';
 
-export const isAuthenticated = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+import JWT from "jsonwebtoken";
+import User from "../model/user.schema.js";
 
-  if (!authHeader) {
-    return res.status(401).json({ message: 'No token provided' });
+export const isLoggedin = async (req, res, next) => {
+  const token = req.cookies?.refresh_token || req.cookies?.accessToken; 
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "Not authorized to access this route",
+    });
   }
 
-  const token = authHeader;
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; 
+    const decodedToken = JWT.verify(token, process.env.JWT_SECRET); 
+
+    const user = await User.findById(decodedToken.id); 
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found with this token",
+      });
+    }
+
+    req.user = user;
     next();
-  } catch (err) {
-    return res.status(401).json({ message: 'Invalid token' });
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: "Token is invalid or expired",
+      error: error.message,
+    });
   }
 };
